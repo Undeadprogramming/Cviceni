@@ -1,0 +1,2 @@
+# Cviceni
+zaklady programovani
