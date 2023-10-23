@@ -7,19 +7,23 @@
 
 void generate_grid()
 {
-    for (int k = 0; k < 12; k++)
+    FILE *fptr;
+    char check;
+    fptr = fopen("base_grid.txt", "r");
+    if (fptr == NULL)
     {
-        printf("    ");
-        for (int i = 0; i < 11; i++)
-        {
-            printf("+");
-            for (int j = 0; j < 4; j++)
-            {
-                printf("-");
-            }
-        }
-        printf("+\n");
+        printf("Cannot open file \n");
+        exit(0);
     }
+    check = fgetc(fptr);
+    while (check != EOF)
+    {
+        printf("%c", check);
+        check = fgetc(fptr);
+    }
+
+    fclose(fptr);
+    printf("\n");
 }
 
 int main()
