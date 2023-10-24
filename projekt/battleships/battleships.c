@@ -11,11 +11,18 @@ typedef struct coordinates
     int y;
 } coordinates;
 
-void generate_grid()
+void generate_grid(int player)
 {
     FILE *fptr;
     char check;
-    fptr = fopen("player_grid.txt", "r");
+    if (player == 1)
+    {
+        fptr = fopen("player_grid.txt", "r");
+    }
+
+    else if (player == 2)
+        fptr = fopen("computer_grid.txt", "r");
+
     if (fptr == NULL)
     {
         printf("Cannot open file \n");
@@ -39,13 +46,18 @@ void print_info()
     printf("Carrier     5\nBattleship  4\nDestroyer   3\nSubmarine   3\nPatrol Boat 2\n\n");
 }
 
-void parse_grid(coordinates c)
+void parse_grid(coordinates c, int player)
 {
     char fill[256];
     int line = 0;
     int column = 0;
     FILE *fptr;
-    fptr = fopen("player_grid.txt", "r+");
+    if (player == 1)
+    {
+        fptr = fopen("player_grid.txt", "r+");
+    }
+    else
+        fptr = fopen("computer_grid.txt", "r+");
 
     while (fgets(fill, sizeof fill, fptr) != NULL) /* read a line */
     {
@@ -73,7 +85,7 @@ void parse_grid(coordinates c)
     fclose(fptr);
 }
 
-void get_coordinates(coordinates c, char ship[12], int player_grid[100])
+void get_coordinates(coordinates c, char ship[12], int player)
 {
     char delim[] = ",";
     char *ptr = strtok(ship, delim);
@@ -82,8 +94,7 @@ void get_coordinates(coordinates c, char ship[12], int player_grid[100])
     {
         c.x = ptr[0] - 65;
         c.y = ptr[1] - 48;
-        player_grid[c.x + (c.y - 1) * 10] = 1;
-        parse_grid(c);
+        parse_grid(c, player);
         ptr = strtok(NULL, delim);
     }
 }
@@ -143,7 +154,7 @@ void place_patrol(char *ship)
     }
 }
 
-void place_ships(int player_grid[100])
+void place_ships()
 {
     coordinates c;
     char ship[14];
@@ -151,37 +162,69 @@ void place_ships(int player_grid[100])
     printf("Choose the placement for your ships separated by commas (eg. E4,F4,G4,H4 for battleship):\n");
 
     place_carrier(ship);
-    get_coordinates(c, ship, player_grid);
-    generate_grid();
+    get_coordinates(c, ship, 1);
+    generate_grid(1);
     place_battleship(ship);
-    get_coordinates(c, ship, player_grid);
-    generate_grid();
+    get_coordinates(c, ship, 1);
+    generate_grid(1);
     place_destroyer(ship);
-    get_coordinates(c, ship, player_grid);
-    generate_grid();
+    get_coordinates(c, ship, 1);
+    generate_grid(1);
     place_submarine(ship);
-    get_coordinates(c, ship, player_grid);
-    generate_grid();
+    get_coordinates(c, ship, 1);
+    generate_grid(1);
     place_patrol(ship);
-    get_coordinates(c, ship, player_grid);
-    generate_grid();
+    get_coordinates(c, ship, 1);
+    generate_grid(1);
+}
+
+void place_ships2()
+{
+    // ships for player 2
+    coordinates c;
+    char ship[14];
+
+    printf("Choose the placement for your ships separated by commas (eg. E4,F4,G4,H4 for battleship):\n");
+
+    place_carrier(ship);
+    get_coordinates(c, ship, 2);
+    generate_grid(2);
+    place_battleship(ship);
+    get_coordinates(c, ship, 2);
+    generate_grid(2);
+    place_destroyer(ship);
+    get_coordinates(c, ship, 2);
+    generate_grid(2);
+    place_submarine(ship);
+    get_coordinates(c, ship, 2);
+    generate_grid(2);
+    place_patrol(ship);
+    get_coordinates(c, ship, 2);
+    generate_grid(2);
 }
 
 void wipe_grid()
 {
-    FILE *fptr1, *fptr2;
+    FILE *fptr1, *fptr2, *fptr3;
     char c;
     fptr1 = fopen("base_grid.txt", "r");
     if (fptr1 == NULL)
     {
-        printf("Cannot open file %s \n", "base_grid.txt");
+        printf("Cannot open file base_grid.txt \n");
         exit(0);
     }
 
     fptr2 = fopen("player_grid.txt", "w");
     if (fptr2 == NULL)
     {
-        printf("Cannot open file %s \n", "player_grid.txt");
+        printf("Cannot open file player_grid.txt \n");
+        exit(0);
+    }
+
+    fptr3 = fopen("computer_grid.txt", "w");
+    if (fptr3 == NULL)
+    {
+        printf("Cannot open file omputer_grid.txt \n");
         exit(0);
     }
 
@@ -189,6 +232,7 @@ void wipe_grid()
     c = fgetc(fptr1);
     while (c != EOF)
     {
+        fputc(c, fptr3);
         fputc(c, fptr2);
         c = fgetc(fptr1);
     }
@@ -197,15 +241,12 @@ void wipe_grid()
 
     fclose(fptr1);
     fclose(fptr2);
+    fclose(fptr3);
 }
 
 int main()
 {
     int mode_choice;
-    int player_grid[100] = {0};
-    int player_battle_grid[100] = {0};
-    int computer_grid[100] = {0};
-    int computer_battle_grid[100] = {0};
 
     wipe_grid();
     printf("Welcome to Battleships!\nChoose a gamemode:\nType 1 for singleplayer\nType 2 for multiplayer\n");
@@ -215,16 +256,21 @@ int main()
     {
     case 1:
         printf("Entering singleplayer mode\n");
-        generate_grid();
+        generate_grid(1);
         print_info();
-        place_ships(player_grid);
+        place_ships();
         break;
 
     case 2:
         printf("Entering multiplayer mode\n");
-        generate_grid();
+        printf("PLayer 1's turn\n");
+        generate_grid(1);
         print_info();
-        place_ships(player_grid);
+        place_ships();
+        printf("PLayer 2's turn\n");
+        generate_grid(2);
+        print_info();
+        place_ships2();
         break;
 
     default:
