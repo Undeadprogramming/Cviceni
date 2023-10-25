@@ -46,11 +46,12 @@ void print_info()
     printf("Carrier     5\nBattleship  4\nDestroyer   3\nSubmarine   3\nPatrol Boat 2\n\n");
 }
 
-void parse_grid(coordinates c, int player)
+bool parse_grid(coordinates c, int player, int type)
 {
     char fill[256];
     int line = 0;
     int column = 0;
+    char check;
     FILE *fptr;
     if (player == 1)
     {
@@ -61,13 +62,94 @@ void parse_grid(coordinates c, int player)
 
     while (fgets(fill, sizeof fill, fptr) != NULL) /* read a line */
     {
-        if (line == 5 + (9 - c.y) * 2)
+
+        if (line == 5 + (8 - c.y) * 2)
         {
-            while (fgetc(fptr) != EOF && line == 5 + (9 - c.y) * 2)
+            check = fgetc(fptr);
+            while (check != EOF && line == 5 + (8 - c.y) * 2)
             {
-                if (column == 4 + c.x * 4)
+                printf("check: %c\n", check); // TODO CHECK IS 1 BEHIND (CHECK + 1 IS PROLLY S)
+                if (column == 5 + c.x * 4)
                 {
-                    fputc('S', fptr);
+                    fseek(fptr, -1, SEEK_CUR);
+                    if (type == 1)
+                    {
+                        if (check != 'S')
+                        {
+                            fputc('S', fptr);
+                        }
+                    }
+                    else
+                    {
+                        if (check == 'S')
+                        {
+                            fputc('X', fptr);
+                            fclose(fptr);
+                            return true;
+                        }
+                        else
+                        {
+                            fputc('O', fptr);
+                            fclose(fptr);
+                            return false;
+                        }
+                    }
+                    break;
+                }
+                else
+                {
+                    column++;
+                }
+                check = fgetc(fptr);
+            }
+            break;
+        }
+        else
+        {
+            line++;
+        }
+    }
+    fclose(fptr);
+    return false;
+}
+
+bool parse_enemy_grid(coordinates c, int player, bool hit)
+{
+    char fill[256];
+    int line = 0;
+    int column = 0;
+    char check;
+    FILE *fptr;
+    if (player == 1)
+    {
+        fptr = fopen("player_grid.txt", "r+");
+    }
+    else
+        fptr = fopen("computer_grid.txt", "r+");
+
+    while (fgets(fill, sizeof fill, fptr) != NULL) /* read a line */
+    {
+        if (line == 5 + (8 - c.y) * 2)
+        {
+
+            while (check = fgetc(fptr) != EOF && line == 5 + (8 - c.y) * 2)
+            {
+                if (column == 65 + c.x * 4)
+                {
+
+                    if (hit)
+                    {
+                        fputc('X', fptr);
+                        fclose(fptr);
+                        return true;
+                    }
+                    else
+                    {
+                        fputc('O', fptr);
+                        fclose(fptr);
+                        return false;
+                    }
+
                     break;
                 }
                 else
@@ -83,9 +165,10 @@ void parse_grid(coordinates c, int player)
         }
     }
     fclose(fptr);
+    return false;
 }
 
-void get_coordinates(coordinates c, char ship[12], int player)
+void get_coordinates(coordinates c, char ship[14], int player)
 {
     char delim[] = ",";
     char *ptr = strtok(ship, delim);
@@ -94,18 +177,51 @@ void get_coordinates(coordinates c, char ship[12], int player)
     {
         c.x = ptr[0] - 65;
         c.y = ptr[1] - 48;
-        parse_grid(c, player);
+        parse_grid(c, player, 1);
         ptr = strtok(NULL, delim);
     }
 }
 
+bool check_ship(char *ship)
+{
+    for (int i = 0; i < strlen(ship); i += 3)
+    {
+        if (ship[i] < 65 || ship[i] > 74)
+        {
+            printf("Wrong letter input!\n");
+            return true;
+        }
+        if (ship[i] > ship[i + 3] + 1 && ship[i] < ship[i + 3] - 1)
+        {
+            printf("Wrong number input!\n");
+            return true;
+        }
+    }
+
+    for (int i = 1; i < strlen(ship); i += 3)
+    {
+        if (ship[i] < 48 || ship[i] > 57)
+        {
+            printf("Wrong number input!\n");
+            return true;
+        }
+    }
+
+    return false;
+}
 void place_carrier(char *ship)
 {
     printf("Carrier (size 5): ");
     scanf("%s", ship);
+
+    if (check_ship(ship))
+    {
+        place_carrier(ship);
+    }
+
     if (strlen(ship) != 14)
     {
-        printf("Wrong input!");
+        printf("Wrong input!\n");
         place_carrier(ship);
     }
 }
@@ -114,6 +230,12 @@ void place_battleship(char *ship)
 {
     printf("Battleship (size 4): ");
     scanf("%s", ship);
+
+    if (check_ship(ship))
+    {
+        place_battleship(ship);
+    }
+
     if (strlen(ship) != 11)
     {
         printf("Wrong input!");
@@ -125,6 +247,12 @@ void place_destroyer(char *ship)
 {
     printf("Destroyer (size 3): ");
     scanf("%s", ship);
+
+    if (check_ship(ship))
+    {
+        place_destroyer(ship);
+    }
+
     if (strlen(ship) != 8)
     {
         printf("Wrong input!");
@@ -136,6 +264,12 @@ void place_submarine(char *ship)
 {
     printf("Submarine (size 3): ");
     scanf("%s", ship);
+
+    if (check_ship(ship))
+    {
+        place_submarine(ship);
+    }
+
     if (strlen(ship) != 8)
     {
         printf("Wrong input!");
@@ -147,6 +281,12 @@ void place_patrol(char *ship)
 {
     printf("Patrol Boat (size 2): ");
     scanf("%s", ship);
+
+    if (check_ship(ship))
+    {
+        place_patrol(ship);
+    }
+
     if (strlen(ship) != 5)
     {
         printf("Wrong input!");
@@ -248,24 +388,59 @@ bool check_end(int player) // TODO CHECKS ENDGAME
 
     FILE *fptr;
     char c;
-    fptr = fopen("player_grid.txt", "r");
+    
+    if (player == 1)
+    {
+        fptr = fopen("player_grid.txt", "r");
+    }
+    else
+        fptr = fopen("computer_grid.txt", "r");
+
     if (fptr == NULL)
     {
         printf("Cannot open file base_grid.txt \n");
         exit(0);
     }
+    fseek(fptr, 50, SEEK_SET);
 
     c = fgetc(fptr);
     while (c != EOF)
     {
         if (c == 'S')
         {
+            fclose(fptr);
             return false;
         }
-
         c = fgetc(fptr);
     }
+    fclose(fptr);
     return true;
+}
+
+void combat(bool player)
+{
+    char shot[2];
+    coordinates c;
+    printf("Choose a cooridnate to shoot: ");
+    scanf("%s", shot);
+    c.x = shot[0] - 65;
+    c.y = shot[1] - 48;
+    printf("c.x: %d\nc.y: %d\n", c.x, c.y);
+    if (check_ship(shot))
+    {
+        combat(player);
+        return;
+    }
+    if (parse_grid(c, !player, 2))
+    {
+        parse_enemy_grid(c, player, true);
+        printf("You hit an enemy ship!\n");
+    }
+    else
+    {
+        parse_enemy_grid(c, player, false);
+        printf("You missed!\n");
+    }
 }
 
 int main()
@@ -295,11 +470,28 @@ int main()
         generate_grid(2);
         print_info();
         place_ships2();
+        while (!check_end(1) && !check_end(2))
+        {
+            printf("PLayer 1's turn\n");
+            generate_grid(1);
+            combat(1);
+            printf("PLayer 2's turn\n");
+            generate_grid(2);
+            combat(0);
+        }
         break;
 
     default:
         printf("Wrong input!");
         break;
     }
+
+    if (check_end(1))
+    {
+        printf("GAME OVER!\nPLAYER 2 WINS!");
+    }
+    else
+        printf("GAME OVER!\nPLAYER 1 WINS!");
+
     return 0;
 }
