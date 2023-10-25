@@ -243,6 +243,30 @@ void wipe_grid()
     fclose(fptr2);
     fclose(fptr3);
 }
+bool check_end(int player) // TODO CHECKS ENDGAME
+{
+
+    FILE *fptr;
+    char c;
+    fptr = fopen("player_grid.txt", "r");
+    if (fptr == NULL)
+    {
+        printf("Cannot open file base_grid.txt \n");
+        exit(0);
+    }
+
+    c = fgetc(fptr);
+    while (c != EOF)
+    {
+        if (c == 'S')
+        {
+            return false;
+        }
+
+        c = fgetc(fptr);
+    }
+    return true;
+}
 
 int main()
 {
