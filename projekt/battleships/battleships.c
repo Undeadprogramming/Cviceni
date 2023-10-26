@@ -68,7 +68,6 @@ bool parse_grid(coordinates c, int player, int type)
             check = fgetc(fptr);
             while (check != EOF && line == 5 + (8 - c.y) * 2)
             {
-                printf("check: %c\n", check); // TODO CHECK IS 1 BEHIND (CHECK + 1 IS PROLLY S)
                 if (column == 5 + c.x * 4)
                 {
                     fseek(fptr, -1, SEEK_CUR);
@@ -294,7 +293,7 @@ void place_patrol(char *ship)
     }
 }
 
-void place_ships()
+void place_ships(bool player)//TODO PLACE UNIVERSAL SHIPS WITH CALL IN FOR
 {
     coordinates c;
     char ship[14];
@@ -302,45 +301,20 @@ void place_ships()
     printf("Choose the placement for your ships separated by commas (eg. E4,F4,G4,H4 for battleship):\n");
 
     place_carrier(ship);
-    get_coordinates(c, ship, 1);
-    generate_grid(1);
+    get_coordinates(c, ship, player);
+    generate_grid(player);
     place_battleship(ship);
-    get_coordinates(c, ship, 1);
-    generate_grid(1);
+    get_coordinates(c, ship, player);
+    generate_grid(player);
     place_destroyer(ship);
-    get_coordinates(c, ship, 1);
-    generate_grid(1);
+    get_coordinates(c, ship, player);
+    generate_grid(player);
     place_submarine(ship);
-    get_coordinates(c, ship, 1);
-    generate_grid(1);
+    get_coordinates(c, ship, player);
+    generate_grid(player);
     place_patrol(ship);
-    get_coordinates(c, ship, 1);
-    generate_grid(1);
-}
-
-void place_ships2()
-{
-    // ships for player 2
-    coordinates c;
-    char ship[14];
-
-    printf("Choose the placement for your ships separated by commas (eg. E4,F4,G4,H4 for battleship):\n");
-
-    place_carrier(ship);
-    get_coordinates(c, ship, 2);
-    generate_grid(2);
-    place_battleship(ship);
-    get_coordinates(c, ship, 2);
-    generate_grid(2);
-    place_destroyer(ship);
-    get_coordinates(c, ship, 2);
-    generate_grid(2);
-    place_submarine(ship);
-    get_coordinates(c, ship, 2);
-    generate_grid(2);
-    place_patrol(ship);
-    get_coordinates(c, ship, 2);
-    generate_grid(2);
+    get_coordinates(c, ship, player);
+    generate_grid(player);
 }
 
 void wipe_grid()
@@ -388,7 +362,7 @@ bool check_end(int player) // TODO CHECKS ENDGAME
 
     FILE *fptr;
     char c;
-    
+
     if (player == 1)
     {
         fptr = fopen("player_grid.txt", "r");
@@ -457,7 +431,7 @@ int main()
         printf("Entering singleplayer mode\n");
         generate_grid(1);
         print_info();
-        place_ships();
+        place_ships(1);
         break;
 
     case 2:
@@ -465,11 +439,11 @@ int main()
         printf("PLayer 1's turn\n");
         generate_grid(1);
         print_info();
-        place_ships();
+        place_ships(1);
         printf("PLayer 2's turn\n");
         generate_grid(2);
         print_info();
-        place_ships2();
+        place_ships(0);
         while (!check_end(1) && !check_end(2))
         {
             printf("PLayer 1's turn\n");
