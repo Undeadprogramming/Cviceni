@@ -183,26 +183,70 @@ void get_coordinates(coordinates c, char ship[14], int player)
 
 bool check_ship(char *ship)
 {
-    for (int i = 0; i < strlen(ship); i += 3)
+    bool letter_id = false;
+
+    if (ship[0] == ship[3])
+    {
+        letter_id = true;
+    }
+
+    if (ship[1] != ship[4] && !letter_id)
+    {
+        printf("Wrong letter input!\n");
+        return true;
+    }
+    printf("Ship: %s\n", ship);
+
+    for (int i = 3; i < strlen(ship); i += 3)
     {
         if (ship[i] < 65 || ship[i] > 74)
         {
             printf("Wrong letter input!\n");
             return true;
         }
-        if (ship[i] > ship[i + 3] + 1 && ship[i] < ship[i + 3] - 1)
+
+        if (letter_id)
         {
-            printf("Wrong number input!\n");
-            return true;
+            if (ship[i] != ship[0])
+            {
+                printf("Ships cannot be placed diagonally!\n");
+                return true;
+            }
+        }
+        else
+        {
+
+            if (ship[i] > ship[i - 3] + 1 || ship[i] < ship[i - 3] - 1)
+            {
+                printf("Coordinates must be adjecent letters ship i: %c ship 3: %c!\n", ship[i], ship[i - 3]);
+                return true;
+            }
         }
     }
 
-    for (int i = 1; i < strlen(ship); i += 3)
+    for (int i = 4; i < strlen(ship); i += 3)
     {
         if (ship[i] < 48 || ship[i] > 57)
         {
             printf("Wrong number input!\n");
             return true;
+        }
+        if (!letter_id)
+        {
+            if (ship[i] != ship[1])
+            {
+                printf("Ships cannot be placed diagonally!\n");
+                return true;
+            }
+        }
+        else
+        {
+
+            if (ship[i] > ship[i - 3] + 1 || ship[i] < ship[i - 3] - 1)
+            {
+                printf("Coordinates must be adjecent number ship i: %c ship 4: %c!\n", ship[i], ship[i - 3]);
+                return true;
+            }
         }
     }
 
@@ -293,7 +337,7 @@ void place_patrol(char *ship)
     }
 }
 
-void place_ships(bool player)//TODO PLACE UNIVERSAL SHIPS WITH CALL IN FOR
+void place_ships(bool player) // TODO PLACE UNIVERSAL SHIPS WITH CALL IN FOR
 {
     coordinates c;
     char ship[14];
