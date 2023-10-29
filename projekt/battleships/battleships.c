@@ -4,6 +4,8 @@
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
+//#include <windows.h>         
+
 
 typedef struct coordinates
 {
@@ -15,6 +17,7 @@ void generate_grid(int player)
 {
     FILE *fptr;
     char check;
+    int count=0;
     if (player == 1)
     {
         fptr = fopen("player_grid.txt", "r");
@@ -31,10 +34,23 @@ void generate_grid(int player)
     check = fgetc(fptr);
     while (check != EOF)
     {
+        count++;
+        if(check=='X')
+        {
+            printf("\033[0;31m%c", check);
+            printf("\033[0;m");
+        }
+        else if(check=='O' && count>50)
+        {
+            printf("\033[0;34m%c", check);
+            printf("\033[0;m");
+             
+        }
+        else
         printf("%c", check);
+       
         check = fgetc(fptr);
     }
-
     fclose(fptr);
     printf("\n");
 }
