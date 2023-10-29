@@ -59,7 +59,7 @@ void print_info()
     printf("Carrier     5\nBattleship  4\nDestroyer   3\nSubmarine   3\nPatrol Boat 2\n\n");
 }
 
-bool parse_grid(coordinates c, int player, int type)
+int parse_grid(coordinates c, int player, int type)
 { // searches txt file for a place to put "S" ships, "X" hits or "O" misses
     char fill[256];
     int line = 0;
@@ -97,13 +97,18 @@ bool parse_grid(coordinates c, int player, int type)
                         {
                             fputc('X', fptr);
                             fclose(fptr);
-                            return true;
+                            return 1; // return for combat function
+                        }
+                        else if (check == 'X' || check == 'O')
+                        {
+                            fclose(fptr);
+                            return 2; // return for combat function
                         }
                         else
                         {
                             fputc('O', fptr);
                             fclose(fptr);
-                            return false;
+                            return 0; // return for combat function
                         }
                     }
                     break;
@@ -122,10 +127,10 @@ bool parse_grid(coordinates c, int player, int type)
         }
     }
     fclose(fptr);
-    return false;
+    return 0;
 }
 
-bool parse_enemy_grid(coordinates c, int player, bool hit)
+void parse_enemy_grid(coordinates c, int player, int hit)
 { // same as parse grid but for different part of the file, searches txt file for a place to put, "X" hits or "O" misses
     char fill[256];
     int line = 0;
@@ -149,17 +154,22 @@ bool parse_enemy_grid(coordinates c, int player, bool hit)
                 if (column == 65 + c.x * 4)
                 {
 
-                    if (hit)
+                    if (hit == 1)
                     {
                         fputc('X', fptr);
                         fclose(fptr);
-                        return true;
+                        return;
+                    }
+                    else if (hit == 2)
+                    {
+                        fclose(fptr);
+                        return;
                     }
                     else
                     {
                         fputc('O', fptr);
                         fclose(fptr);
-                        return false;
+                        return;
                     }
 
                     break;
@@ -177,7 +187,6 @@ bool parse_enemy_grid(coordinates c, int player, bool hit)
         }
     }
     fclose(fptr);
-    return false;
 }
 
 void get_coordinates(coordinates c, char ship[14], int player)
@@ -255,8 +264,8 @@ bool number_coords(char *ship, bool letter_id)
     return false;
 }
 
-bool check_ship(char *ship)
-{ // checks if input string matches the restrictions
+bool check_ship(char *ship) // TODO NON STACKABLE SHIPS, PARSE GRID AND RETURN FALSE IF CHECK == "S"
+{                           // checks if input string matches the restrictions
     bool letter_id = false;
 
     if (ship[0] == ship[3]) // checks if the ship is placed horizontally
@@ -284,6 +293,7 @@ void place_carrier(char *ship)
     if (check_ship(ship)) // checks input
     {
         place_carrier(ship); // recursively calls itself to ask for coordinates
+        return;
     }
 
     if (strlen(ship) != 14) // checks if ship has correct length
@@ -301,6 +311,7 @@ void place_battleship(char *ship)
     if (check_ship(ship)) // checks input
     {
         place_battleship(ship); // recursively calls itself to ask for coordinates
+        return;
     }
 
     if (strlen(ship) != 11) // checks if ship has correct length
@@ -318,6 +329,7 @@ void place_destroyer(char *ship)
     if (check_ship(ship)) // checks input
     {
         place_destroyer(ship); // recursively calls itself to ask for coordinates
+        return;
     }
 
     if (strlen(ship) != 8) // checks if ship has correct length
@@ -335,6 +347,7 @@ void place_submarine(char *ship)
     if (check_ship(ship)) // checks input
     {
         place_submarine(ship); // recursively calls itself to ask for coordinates
+        return;
     }
 
     if (strlen(ship) != 8) // checks if ship has correct length
@@ -352,6 +365,7 @@ void place_patrol(char *ship)
     if (check_ship(ship)) // checks input
     {
         place_patrol(ship); // recursively calls itself to ask for coordinates
+        return;
     }
 
     if (strlen(ship) != 5) // checks if ship has correct length
@@ -361,8 +375,8 @@ void place_patrol(char *ship)
     }
 }
 
-void place_ships(int player) // TODO PLACE UNIVERSAL SHIPS WITH CALL IN FOR
-{                            // places all the ships on the grid after checking input
+void place_ships(int player)
+{ // places all the ships on the grid after checking input
     coordinates c;
     char ship[14];
 
@@ -471,14 +485,20 @@ void combat(bool player)
         combat(player); // recursively calls itself to ask for coordinates
         return;
     }
-    if (parse_grid(c, !player, 2)) // searches the grid of opposing player to xheck if shot hit
+
+    if (parse_grid(c, !player, 2) == 1) // searches the grid of opposing player to check if shot hit
     {
-        parse_enemy_grid(c, player, true); // if hit puts "X" in your imaginary opponent's grid
+        parse_enemy_grid(c, player, 1); // if hit puts "X" in your imaginary opponent's grid
         printf("You hit an enemy ship!\n");
+    }
+    else if (parse_grid(c, !player, 2) == 2)
+    {
+        parse_enemy_grid(c, player, 2); // if you chose a coordinate you already tried, you are reminded of it
+        printf("You already tried here genius...\n");
     }
     else
     {
-        parse_enemy_grid(c, player, false); // if missed puts "O" in your imaginary opponent's grid
+        parse_enemy_grid(c, player, 0); // if missed puts "O" in your imaginary opponent's grid
         printf("You missed!\n");
     }
 }
@@ -538,7 +558,7 @@ int main()
     }
     else
     {
-        printf("GAME OVER!\nPLAYER 1 WINS!");
+        printf("GAME OVER!\nPLAYER 1 WINS!\n");
         printf("Player 1's fleet:\n");
         generate_grid(1);
         printf("Player 2's fleet:\n");
