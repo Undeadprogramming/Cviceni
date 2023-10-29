@@ -238,7 +238,7 @@ bool number_coords(char *ship, bool letter_id)
 {
     for (int i = 4; i < strlen(ship); i += 3)
     {
-        if (ship[i] < 48 || ship[i] > 57) // checks if coordinates contain possible numbers "1" to "9"
+        if (ship[i] < 48 || ship[i] > 57) // checks if coordinates contain possible numbers "0" to "9"
         {
             printf("Wrong number input!\n");
             return true;
@@ -503,6 +503,68 @@ void combat(bool player)
     }
 }
 
+void computer_ship_gen(int size)
+{
+    coordinates c;
+    c.x = rand() % 10;
+    c.y = rand() % 10;
+    printf("c.x: %d\nc.y: %d\n ", c.x, c.y);
+    bool direction = rand() % 2;
+
+    if (direction)
+    {
+        if (c.x < 5)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                parse_grid(c, 0, 1); // searches grid with converted coordinates
+                c.x++;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < size; i++)
+            {
+                parse_grid(c, 0, 1); // searches grid with converted coordinates
+                c.x--;
+            }
+        }
+    }
+    else
+    {
+        if (c.y < 5)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                parse_grid(c, 0, 1); // searches grid with converted coordinates
+                c.y++;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < size; i++)
+            {
+                parse_grid(c, 0, 1); // searches grid with converted coordinates
+                c.y--;
+            }
+        }
+    }
+
+    generate_grid(2);
+}
+
+void computer_ships()
+{
+    coordinates c;
+    srand(time(0));
+
+    computer_ship_gen(5);
+    computer_ship_gen(4);
+    computer_ship_gen(3);
+    computer_ship_gen(3);
+    computer_ship_gen(2);
+}
+
 int main()
 {
     int mode_choice;
@@ -515,9 +577,13 @@ int main()
     {
     case 1:
         printf("Entering singleplayer mode\n");
+        computer_ships();
+        printf("PLayer's turn\n"); // begins turn and places ships for the player
         generate_grid(1);
         print_info();
         place_ships(1);
+        printf("Computer's turn\n"); // begins turn and places ships for player 2
+        computer_ships();
         break;
 
     case 2:
