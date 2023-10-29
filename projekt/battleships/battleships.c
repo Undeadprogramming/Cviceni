@@ -503,7 +503,7 @@ void combat(bool player)
     }
 }
 
-void computer_ship_gen(int size)
+void computer_ship_gen(int ship_arr[10][10], int size)
 {
     coordinates c;
     c.x = rand() % 10;
@@ -515,16 +515,41 @@ void computer_ship_gen(int size)
     {
         if (c.x < 5)
         {
+            for (int j = 0; j < size; j++)
+            {
+                if (ship_arr[c.x][c.y] == 1)
+                {
+                    printf("Collision occured, redoing generation\n");
+                    computer_ship_gen(ship_arr, size);
+                    return;
+                }
+                c.x++;
+            }
+            c.x -= size;
+
             for (int i = 0; i < size; i++)
             {
+                ship_arr[c.x][c.y] = 1;
                 parse_grid(c, 0, 1); // searches grid with converted coordinates
                 c.x++;
             }
         }
         else
         {
+            for (int j = 0; j < size; j++)
+            {
+                if (ship_arr[c.x][c.y] == 1)
+                {
+                    printf("Collision occured, redoing generation\n");
+                    computer_ship_gen(ship_arr, size);
+                    return;
+                }
+                c.x--;
+            }
+            c.x += size;
             for (int i = 0; i < size; i++)
             {
+                ship_arr[c.x][c.y] = 1;
                 parse_grid(c, 0, 1); // searches grid with converted coordinates
                 c.x--;
             }
@@ -534,16 +559,40 @@ void computer_ship_gen(int size)
     {
         if (c.y < 5)
         {
+            for (int j = 0; j < size; j++)
+            {
+                if (ship_arr[c.x][c.y] == 1)
+                {
+                    printf("Collision occured, redoing generation\n");
+                    computer_ship_gen(ship_arr, size);
+                    return;
+                }
+                c.y++;
+            }
+            c.y -= size;
             for (int i = 0; i < size; i++)
             {
+                ship_arr[c.x][c.y] = 1;
                 parse_grid(c, 0, 1); // searches grid with converted coordinates
                 c.y++;
             }
         }
         else
         {
+            for (int j = 0; j < size; j++)
+            {
+                if (ship_arr[c.x][c.y] == 1)
+                {
+                    printf("Collision occured, redoing generation\n");
+                    computer_ship_gen(ship_arr, size);
+                    return;
+                }
+                c.y--;
+            }
+            c.y += size;
             for (int i = 0; i < size; i++)
             {
+                ship_arr[c.x][c.y] = 1;
                 parse_grid(c, 0, 1); // searches grid with converted coordinates
                 c.y--;
             }
@@ -556,13 +605,14 @@ void computer_ship_gen(int size)
 void computer_ships()
 {
     coordinates c;
+    int ship_arr[10][10] = {0};
     srand(time(0));
 
-    computer_ship_gen(5);
-    computer_ship_gen(4);
-    computer_ship_gen(3);
-    computer_ship_gen(3);
-    computer_ship_gen(2);
+    computer_ship_gen(ship_arr, 5);
+    computer_ship_gen(ship_arr, 4);
+    computer_ship_gen(ship_arr, 3);
+    computer_ship_gen(ship_arr, 3);
+    computer_ship_gen(ship_arr, 2);
 }
 
 int main()
