@@ -4,8 +4,6 @@
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
-//#include <windows.h>         
-
 
 typedef struct coordinates
 {
@@ -17,7 +15,7 @@ void generate_grid(int player)
 {
     FILE *fptr;
     char check;
-    int count=0;
+    int count = 0;
     if (player == 1)
     {
         fptr = fopen("player_grid.txt", "r");
@@ -35,20 +33,19 @@ void generate_grid(int player)
     while (check != EOF)
     {
         count++;
-        if(check=='X')
+        if (check == 'X')
         {
             printf("\033[0;31m%c", check);
             printf("\033[0;m");
         }
-        else if(check=='O' && count>50)
+        else if (check == 'O' && count > 50)
         {
             printf("\033[0;34m%c", check);
             printf("\033[0;m");
-             
         }
         else
-        printf("%c", check);
-       
+            printf("%c", check);
+
         check = fgetc(fptr);
     }
     fclose(fptr);
@@ -206,7 +203,7 @@ bool check_ship(char *ship)
         letter_id = true;
     }
 
-    if (ship[1] != ship[4] && !letter_id)
+    if (ship[1] != ship[4] && !letter_id && strlen(ship) > 2)
     {
         printf("Wrong letter input!\n");
         return true;
@@ -353,7 +350,7 @@ void place_patrol(char *ship)
     }
 }
 
-void place_ships(bool player) // TODO PLACE UNIVERSAL SHIPS WITH CALL IN FOR
+void place_ships(int player) // TODO PLACE UNIVERSAL SHIPS WITH CALL IN FOR
 {
     coordinates c;
     char ship[14];
@@ -503,7 +500,7 @@ int main()
         printf("PLayer 2's turn\n");
         generate_grid(2);
         print_info();
-        place_ships(0);
+        place_ships(2);
         while (!check_end(1) && !check_end(2))
         {
             printf("PLayer 1's turn\n");
