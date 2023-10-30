@@ -189,18 +189,24 @@ void parse_enemy_grid(coordinates c, int player, int hit)
     fclose(fptr);
 }
 
-void get_coordinates(coordinates c, char ship[14], int player)
+void get_coordinates(coordinates c, char ship[14], int player, coordinates *placed_ships, int *counter)
 { // converts string of coordinates to a usable structure
     char delim[] = ",";
     char *ptr = strtok(ship, delim);
+    int count = *counter;
 
     while (ptr != NULL)
     {
         c.x = ptr[0] - 65;
         c.y = ptr[1] - 48;
+        printf("counter:%d\n", count);
+        placed_ships[count].x = c.x;
+        placed_ships[count].y = c.y;
         parse_grid(c, player, 1); // searches grid with converted coordinates
         ptr = strtok(NULL, delim);
+        count++;
     }
+    *counter = count;
 }
 
 bool letter_coords(char *ship, bool letter_id)
@@ -375,28 +381,34 @@ void place_patrol(char *ship)
     }
 }
 
-void place_ships(int player)
+void place_ships(int player, coordinates *placed_ships)
 { // places all the ships on the grid after checking input
     coordinates c;
     char ship[14];
+    int counter = 0;
 
     printf("Choose the placement for your ships separated by commas (eg. E4,F4,G4,H4 for battleship):\n");
 
     place_carrier(ship);
-    get_coordinates(c, ship, player);
+    get_coordinates(c, ship, player, placed_ships, &counter);
     generate_grid(player);
     place_battleship(ship);
-    get_coordinates(c, ship, player);
+    get_coordinates(c, ship, player, placed_ships, &counter);
     generate_grid(player);
     place_destroyer(ship);
-    get_coordinates(c, ship, player);
+    get_coordinates(c, ship, player, placed_ships, &counter);
     generate_grid(player);
     place_submarine(ship);
-    get_coordinates(c, ship, player);
+    get_coordinates(c, ship, player, placed_ships, &counter);
     generate_grid(player);
     place_patrol(ship);
-    get_coordinates(c, ship, player);
+    get_coordinates(c, ship, player, placed_ships, &counter);
     generate_grid(player);
+
+    for (int i = 0; i < counter; i++)
+    {
+        printf("arr pos %d: %d,%d\n", i, placed_ships[i].x, placed_ships[i].y);
+    }
 }
 
 void wipe_grid()
@@ -471,7 +483,71 @@ bool check_end(int player) // TODO CHECKS ENDGAME
     return true; // returns true if game is over
 }
 
-void combat(int player)
+bool ship_sunk(coordinates *placed_ships)
+{
+    for (int i = 0; i < 17; i++)
+    {
+        printf("arr pos %d: %d,%d\n", i, placed_ships[i].x, placed_ships[i].y);
+    }
+    int sunk = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        if (placed_ships[i].x == 11)
+            sunk++;
+        if (sunk == 5)
+        {
+            placed_ships[i].x = 12;
+            return true;
+        }
+    }
+    sunk = 0;
+    for (int i = 5; i < 9; i++)
+    {
+        if (placed_ships[i].x == 11)
+            sunk++;
+        if (sunk == 4)
+        {
+            placed_ships[i].x = 12;
+            return true;
+        }
+    }
+    sunk = 0;
+    for (int i = 9; i < 12; i++)
+    {
+        if (placed_ships[i].x == 11)
+            sunk++;
+        if (sunk == 3)
+        {
+            placed_ships[i].x = 12;
+            return true;
+        }
+    }
+    sunk = 0;
+    for (int i = 12; i < 15; i++)
+    {
+        if (placed_ships[i].x == 11)
+            sunk++;
+        if (sunk == 3)
+        {
+            placed_ships[i].x = 12;
+            return true;
+        }
+    }
+    sunk = 0;
+    for (int i = 15; i < 17; i++)
+    {
+        if (placed_ships[i].x == 11)
+            sunk++;
+        if (sunk == 2)
+        {
+            placed_ships[i].x = 12;
+            return true;
+        }
+    }
+    return false;
+}
+
+void combat(int player, coordinates *placed_ships_computer)
 { // funccion asks for shooting coordinates and puts "X" or "O" on the grids
     char shot[2];
     int aim;
@@ -483,7 +559,7 @@ void combat(int player)
 
     if (check_ship(shot))
     {
-        combat(player); // recursively calls itself to ask for coordinates
+        combat(player, placed_ships_computer); // recursively calls itself to ask for coordinates
         return;
     }
 
@@ -491,8 +567,23 @@ void combat(int player)
 
     if (aim == 1) // searches the grid of opposing player to check if shot hit
     {
+        printf("hit coords: %d,%d\n", c.x, c.y);
+        for (int i = 0; i < 17; i++)
+        {
+            printf("ship coords: %d,%d\n", placed_ships_computer[i].x, placed_ships_computer[i].y);
+            if (placed_ships_computer[i].x == c.x && placed_ships_computer[i].y == c.y)
+            {
+                placed_ships_computer[i].x = 11;
+                placed_ships_computer[i].y = 11;
+            }
+        }
+
         parse_enemy_grid(c, player, 1); // if hit puts "X" in your imaginary opponent's grid
         printf("You hit an enemy ship!\n");
+        if (ship_sunk(placed_ships_computer))
+        {
+            printf("You sunk an enemy ship!\n");
+        }
     }
     else if (aim == 2)
     {
@@ -504,13 +595,18 @@ void combat(int player)
         parse_enemy_grid(c, player, 0); // if missed puts "O" in your imaginary opponent's grid
         printf("You missed!\n");
     }
+    if (ship_sunk(placed_ships_computer))
+    {
+        printf("You sunk an enemy ship!\n");
+    }
 }
 
-void computer_gen_x(int ship_arr[10][10], int size)
+void computer_gen_x(int ship_arr[10][10], int size, coordinates *placed_ships_computer, int *counter)
 {
     coordinates c;
     c.x = rand() % 10;
     c.y = rand() % 10;
+    int count = *counter;
     printf("c.x: %d\nc.y: %d\n ", c.x, c.y);
 
     if (c.x < 5)
@@ -520,7 +616,7 @@ void computer_gen_x(int ship_arr[10][10], int size)
             if (ship_arr[c.x][c.y] == 1)
             {
                 printf("Collision occured, redoing generation\n");
-                computer_gen_x(ship_arr, size);
+                computer_gen_x(ship_arr, size, placed_ships_computer, counter);
                 return;
             }
             c.x++;
@@ -529,9 +625,12 @@ void computer_gen_x(int ship_arr[10][10], int size)
 
         for (int i = 0; i < size; i++)
         {
+            placed_ships_computer[count].x = c.x;
+            placed_ships_computer[count].y = c.y;
             ship_arr[c.x][c.y] = 1;
             parse_grid(c, 0, 1); // searches grid with converted coordinates
             c.x++;
+            count++;
         }
     }
     else
@@ -541,7 +640,7 @@ void computer_gen_x(int ship_arr[10][10], int size)
             if (ship_arr[c.x][c.y] == 1)
             {
                 printf("Collision occured, redoing generation\n");
-                computer_gen_x(ship_arr, size);
+                computer_gen_x(ship_arr, size, placed_ships_computer, counter);
                 return;
             }
             c.x--;
@@ -549,18 +648,23 @@ void computer_gen_x(int ship_arr[10][10], int size)
         c.x += size;
         for (int i = 0; i < size; i++)
         {
+            placed_ships_computer[count].x = c.x;
+            placed_ships_computer[count].y = c.y;
             ship_arr[c.x][c.y] = 1;
             parse_grid(c, 0, 1); // searches grid with converted coordinates
             c.x--;
+            count++;
         }
     }
+    *counter = count;
 }
 
-void computer_gen_y(int ship_arr[10][10], int size)
+void computer_gen_y(int ship_arr[10][10], int size, coordinates *placed_ships_computer, int *counter)
 {
     coordinates c;
     c.x = rand() % 10;
     c.y = rand() % 10;
+    int count = *counter;
     printf("c.x: %d\nc.y: %d\n ", c.x, c.y);
     if (c.y < 5)
     {
@@ -569,7 +673,7 @@ void computer_gen_y(int ship_arr[10][10], int size)
             if (ship_arr[c.x][c.y] == 1)
             {
                 printf("Collision occured, redoing generation\n");
-                computer_gen_y(ship_arr, size);
+                computer_gen_y(ship_arr, size, placed_ships_computer, counter);
                 return;
             }
             c.y++;
@@ -577,9 +681,12 @@ void computer_gen_y(int ship_arr[10][10], int size)
         c.y -= size;
         for (int i = 0; i < size; i++)
         {
+            placed_ships_computer[count].x = c.x;
+            placed_ships_computer[count].y = c.y;
             ship_arr[c.x][c.y] = 1;
             parse_grid(c, 0, 1); // searches grid with converted coordinates
             c.y++;
+            count++;
         }
     }
     else
@@ -589,7 +696,7 @@ void computer_gen_y(int ship_arr[10][10], int size)
             if (ship_arr[c.x][c.y] == 1)
             {
                 printf("Collision occured, redoing generation\n");
-                computer_gen_y(ship_arr, size);
+                computer_gen_y(ship_arr, size, placed_ships_computer, counter);
                 return;
             }
             c.y--;
@@ -597,43 +704,52 @@ void computer_gen_y(int ship_arr[10][10], int size)
         c.y += size;
         for (int i = 0; i < size; i++)
         {
+            placed_ships_computer[count].x = c.x;
+            placed_ships_computer[count].y = c.y;
             ship_arr[c.x][c.y] = 1;
             parse_grid(c, 0, 1); // searches grid with converted coordinates
             c.y--;
+            count++;
         }
     }
+    *counter = count;
 }
 
-void computer_ship_gen(int ship_arr[10][10], int size)
+void computer_ship_gen(int ship_arr[10][10], int size, coordinates *placed_ships_computer, int *counter)
 {
 
     bool direction = rand() % 2;
 
     if (direction)
     {
-        computer_gen_x(ship_arr, size);
+        computer_gen_x(ship_arr, size, placed_ships_computer, counter);
     }
     else
     {
-        computer_gen_y(ship_arr, size);
+        computer_gen_y(ship_arr, size, placed_ships_computer, counter);
     }
 
     generate_grid(2);
 }
 
-void computer_ships()
+void computer_ships(coordinates *placed_ships_computer)
 {
     coordinates c;
     int ship_arr[10][10] = {0};
+    int counter = 0;
 
-    computer_ship_gen(ship_arr, 5);
-    computer_ship_gen(ship_arr, 4);
-    computer_ship_gen(ship_arr, 3);
-    computer_ship_gen(ship_arr, 3);
-    computer_ship_gen(ship_arr, 2);
+    computer_ship_gen(ship_arr, 5, placed_ships_computer, &counter);
+    computer_ship_gen(ship_arr, 4, placed_ships_computer, &counter);
+    computer_ship_gen(ship_arr, 3, placed_ships_computer, &counter);
+    computer_ship_gen(ship_arr, 3, placed_ships_computer, &counter);
+    computer_ship_gen(ship_arr, 2, placed_ships_computer, &counter);
+    for (int i = 0; i < 17; i++)
+    {
+        printf("arr pos %d: %d,%d\n", i, placed_ships_computer[i].x, placed_ships_computer[i].y);
+    }
 }
 
-void computer_combat()
+void computer_random_combat()
 {
     coordinates c;
     int aim;
@@ -660,10 +776,100 @@ void computer_combat()
     }
 }
 
+void computer_better_combat(coordinates *hits, int *hits_num, coordinates *placed_ships_player)
+{
+    coordinates c;
+    int aim;
+    c.x = rand() % 10;
+    c.y = rand() % 10;
+    printf("c.x: %d\nc.y: %d\n", c.x, c.y);
+
+    aim = parse_grid(c, 1, 2);
+
+    if (aim == 1) // searches the grid of opposing player to check if shot hit
+    {
+        // hits[*hits_num].x = c.x;
+        // hits[*hits_num].y = c.y;
+        printf("hit coords: %d,%d\n", c.x, c.y);
+        for (int i = 0; i < 17; i++)
+        {
+            printf("ship coords: %d,%d\n", placed_ships_player[i].x, placed_ships_player[i].y);
+            if (placed_ships_player[i].x == c.x && placed_ships_player[i].y == c.y)
+            {
+                placed_ships_player[i].x = 11;
+                placed_ships_player[i].y = 11;
+            }
+        }
+        parse_enemy_grid(c, 2, 1); // if hit puts "X" in your imaginary opponent's grid
+        printf("Computer hit your ship!\n");
+    }
+    else if (aim == 2)
+    {
+        parse_enemy_grid(c, 2, 2); // if you chose a coordinate you already tried, you are reminded of it
+        printf("Computer hit itself in its own confusion\n");
+    }
+    else
+    {
+        parse_enemy_grid(c, 2, 0); // if missed puts "O" in your imaginary opponent's grid
+        printf("Computer missed!\n");
+    }
+    if (ship_sunk(placed_ships_player))
+    {
+        printf("Computer sank your ship!\n");
+    }
+}
+
+void easy_mode(coordinates *placed_ships_player, coordinates *placed_ships_computer)
+{
+    printf("PLayer's turn\n"); // begins turn and places ships for the player
+    generate_grid(1);
+    print_info();
+    place_ships(1, placed_ships_player);
+    printf("Computer's turn\n"); // begins turn and places ships for player 2
+    computer_ships(placed_ships_computer);
+    while (!check_end(1) && !check_end(2)) // starts combat untill either players fleet is destroyed
+    {
+        printf("PLayer 1's turn\n");
+        generate_grid(1);
+        combat(1, placed_ships_computer);
+        if (check_end(1) || check_end(2)) // checks if player 1 won the game
+            break;
+        printf("Computer's turn\n");
+        computer_random_combat();
+        generate_grid(2);
+    }
+}
+
+void normal_mode(coordinates *placed_ships_player, coordinates *placed_ships_computer)
+{
+    coordinates *hits;
+    int hits_num;
+    printf("PLayer's turn\n"); // begins turn and places ships for the player
+    generate_grid(1);
+    print_info();
+    place_ships(1, placed_ships_player);
+    printf("Computer's turn\n"); // begins turn and places ships for player 2
+    computer_ships(placed_ships_computer);
+    while (!check_end(1) && !check_end(2)) // starts combat untill either players fleet is destroyed
+    {
+        printf("PLayer 1's turn\n");
+        generate_grid(1);
+        combat(1, placed_ships_computer);
+        if (check_end(1) || check_end(2)) // checks if player 1 won the game
+            break;
+        printf("Computer's turn\n");
+        computer_better_combat(hits, &hits_num, placed_ships_player);
+        generate_grid(2);
+    }
+}
+
 int main()
 {
     int mode_choice;
+    int diff_choice;
     srand(time(0));
+    coordinates placed_ships_player[17];
+    coordinates placed_ships_computer[17];
 
     wipe_grid();
     printf("Welcome to Battleships!\nChoose a gamemode:\nType 1 for singleplayer\nType 2 for multiplayer\n");
@@ -674,23 +880,23 @@ int main()
     case 1:
         printf("Entering singleplayer mode\n");
         // computer_ships();
-        printf("PLayer's turn\n"); // begins turn and places ships for the player
-        generate_grid(1);
-        print_info();
-        place_ships(1);
-        printf("Computer's turn\n"); // begins turn and places ships for player 2
-        computer_ships();
-        while (!check_end(1) && !check_end(2)) // starts combat untill either players fleet is destroyed
+        printf("Pick a difficulty\n1 for Easy\n2 for Normal\n3 for Hard\n");
+        scanf("%d", &diff_choice);
+
+        switch (diff_choice)
         {
-            printf("PLayer 1's turn\n");
-            generate_grid(1);
-            combat(1);
-            if (check_end(1) || check_end(2)) // checks if player 1 won the game
-                break;
-            printf("Computer's turn\n");
-            computer_combat();
-            generate_grid(2);
+        case 1:
+            easy_mode(placed_ships_player, placed_ships_computer);
+            break;
+
+        case 2:
+            normal_mode(placed_ships_player, placed_ships_computer);
+            break;
+
+        default:
+            break;
         }
+
         break;
 
     case 2:
@@ -698,21 +904,21 @@ int main()
         printf("PLayer 1's turn\n"); // begins turn and places ships for player 1
         generate_grid(1);
         print_info();
-        place_ships(1);
+        place_ships(1, placed_ships_player);
         printf("PLayer 2's turn\n"); // begins turn and places ships for player 2
         generate_grid(2);
         print_info();
-        place_ships(2);
+        place_ships(2, placed_ships_computer);
         while (!check_end(1) && !check_end(2)) // starts combat untill either players fleet is destroyed
         {
             printf("PLayer 1's turn\n");
             generate_grid(1);
-            combat(1);
+            combat(1, placed_ships_computer);
             if (check_end(1) || check_end(2)) // checks if player 1 won the game
                 break;
             printf("PLayer 2's turn\n");
             generate_grid(2);
-            combat(0);
+            combat(0, placed_ships_player);
         }
         break;
 
